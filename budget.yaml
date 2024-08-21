@@ -1,0 +1,142 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: "This stack creates a budget in an account that will email the specified users when 80% and 100% of the actual budget has been hit and when 100% of the budget has been forecasted."
+
+Metadata: 
+  AWS::CloudFormation::Interface: 
+    ParameterGroups: 
+      - 
+        Label: 
+          default: "Budget Configuration"
+        Parameters: 
+          - MonthlyBudgetName
+          - MonthlyBudgetLimit
+          - DailyBudgetName
+          - DailyBudgetLimit
+          - UserEmail
+
+    ParameterLabels:
+      # Naming Configuration
+      MonthlyBudgetName: 
+        default: "What is the desired monthly budget name?"
+      MonthlyBudgetLimit:
+        default: "What is the desired limit for the monthly budget?"
+      DailyBudgetName: 
+        default: "What is the desired daily budget name?"
+      DailyBudgetLimit:
+        default: "What is the desired limit for the daily budget?"
+      UserEmail:
+        default: "What is the email that should receive the budget alerts?"
+
+Parameters:
+#### Naming ####
+  MonthlyBudgetName:
+    Description: Name of the monthly budget
+    Type: String
+
+  MonthlyBudgetLimit:
+    Description: The monthly budget amount
+    Type: Number
+
+  DailyBudgetName:
+    Description: Name of the daily budget
+    Type: String
+
+  DailyBudgetLimit:
+    Description: The daily budget amount
+    Type: Number
+
+  UserEmail:
+    Description: The email that should receive budget alerts
+    Type: String
+
+Resources:
+
+  MonthlyBudget:
+    Type: AWS::Budgets::Budget
+    Properties: 
+      Budget: 
+        BudgetLimit: 
+          Amount: !Ref MonthlyBudgetLimit
+          Unit: "USD"
+        BudgetName: !Ref MonthlyBudgetName
+        BudgetType: "COST"
+        CostTypes: 
+          IncludeCredit: false
+          IncludeDiscount: true
+          IncludeOtherSubscription: true
+          IncludeRecurring: true
+          IncludeRefund: false
+          IncludeSubscription: true
+          IncludeSupport: true
+          IncludeTax: true
+          IncludeUpfront: true
+          UseAmortized: false
+          UseBlended: false
+        TimeUnit: "MONTHLY"
+      NotificationsWithSubscribers:
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 80
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref UserEmail
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 100
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref UserEmail
+        - Notification:
+            NotificationType: FORECASTED
+            ComparisonOperator: GREATER_THAN
+            Threshold: 100
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref UserEmail
+
+  DailyBudget:
+    Type: AWS::Budgets::Budget
+    Properties: 
+      Budget: 
+        BudgetLimit: 
+          Amount: !Ref DailyBudgetLimit
+          Unit: "USD"
+        BudgetName: !Ref DailyBudgetName
+        BudgetType: "COST"
+        CostTypes: 
+          IncludeCredit: false
+          IncludeDiscount: true
+          IncludeOtherSubscription: true
+          IncludeRecurring: true
+          IncludeRefund: false
+          IncludeSubscription: true
+          IncludeSupport: true
+          IncludeTax: true
+          IncludeUpfront: true
+          UseAmortized: false
+          UseBlended: false
+        TimeUnit: "DAILY"
+      NotificationsWithSubscribers:
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 80
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref UserEmail
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 100
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref UserEmail
+
+Outputs:
+  MonthlyBudgetId:
+    Value: !Ref MonthlyBudget
+  DailyBudgetId:
+    Value: !Ref DailyBudget
